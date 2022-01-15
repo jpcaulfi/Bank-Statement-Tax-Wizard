@@ -1,4 +1,4 @@
-# Bank Statement Book-Keeper
+# Bank Statement Tax Wizard
 
 A Python program designed to extract transactions from downloaded bank statements and organize the 
 company's accounting books.
