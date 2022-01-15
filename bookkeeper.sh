@@ -26,7 +26,7 @@ echo "------------------------------------------------------------"
 echo -e "\n\n\n\n\n\n\n\n\n"
 sleep 3
 
-# Import PDF files
+# Process PDF files into transaction log
 start_time=$(date +%M)
 _pdf_files="$(find ./imports/ -name "*.pdf")"
 if [[ $_pdf_files == "" ]];
