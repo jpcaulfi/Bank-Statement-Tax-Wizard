@@ -29,7 +29,7 @@ You can trigger either of these within `bookkeeper.sh` by un-commenting the `pyt
 
 ### How it Works
 
-Just like the real Intuit QuickBooks functionality that this program is based off, the Bank Account Book Keeper will 
+Just like the real Intuit QuickBooks functionality that this program is based off, the Bank Account Tax Wizard will 
 simply try to group transactions that match in name or description and help you sort every single transaction into a category.
 
 You'll have the ability to go through transactions one by one or group all matches into the same category. 
