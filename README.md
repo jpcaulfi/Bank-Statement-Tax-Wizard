@@ -41,6 +41,6 @@ The results will consist of the sum of each category broken down by year and als
 
 ### Fiscal New Year Explained
 
-The fiscal year is what the user can dictate as the end of their financial year in their company's accounting books.
+The fiscal new year is what the user can dictate as the end of their financial year in their company's accounting books.
 For example, if my business's fiscal year for 2016 is March 2016 - March 2017, I can specify March 1st as my fiscal
 new year and view results according to my company's specific business flow.
