@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Enter the repository with cd and run this command:
+#    sudo bash bookkeeper.sh
+
 # Enter your database information here:
 COMPANY=""
 DATABASE_STRING="localhost"
