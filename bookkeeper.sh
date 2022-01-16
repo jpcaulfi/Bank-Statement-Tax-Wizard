@@ -8,14 +8,14 @@ DATABASE_USERNAME=""
 DATABASE_PASSWORD=""
 
 # Setup
-#sudo apt update
-#sudo apt-get update
-#sudo apt install python3 python3-pip poppler-utils
-#pip install mysql-connector-python xlsxwriter
-#sudo /etc/init.d/mysql start
-#echo -e "\n\n\n"
-#echo "Environment prepared"
-#sleep 2
+sudo apt update
+sudo apt-get update
+sudo apt install python3 python3-pip poppler-utils
+pip install mysql-connector-python xlsxwriter
+sudo /etc/init.d/mysql start
+echo -e "\n\n\n"
+echo "Environment prepared"
+sleep 2
 
 # Reset DB
 python3 reset_db.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
