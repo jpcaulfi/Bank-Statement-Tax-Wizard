@@ -48,6 +48,7 @@ mkdir results
 mkdir temp
 
 ## Iterate over each PDF file
+TRANSACTION_REGEX='[0-9]{1,2}\/[0-9].*[0-9]{1,3}\.[0-9]{1,2}'
 for f in $_pdf_files
 do
   echo "Processing PDF file $f"
@@ -61,42 +62,86 @@ do
   ## Determine the number of statements present and the line numbers they begin at
   NUMBER_OF_STATEMENTS="$(pdfgrep "" $f | grep -i 'beginning balance on ' | wc -l)"
   LINE_NUMBERS=(`pdfgrep "" $f | grep -i -n 'beginning balance on ' | cut -d : -f 1`)
-  END_OF_FILE=$(pdfgrep "" $f | wc -l)
-#  declare -i END_OF_FILE=$(pdfgrep "" $f | wc -l)
+  declare -i END_OF_FILE=$(pdfgrep "" $f | wc -l)-1
 
   ## Iterate over each statement
   for i in $(seq 1 $NUMBER_OF_STATEMENTS)
   do
 
-    # TODO: Fix block end identifier (withdrawals not always present)
     ### Identify the size (in lines) of the current statement
     if [[ ${LINE_NUMBERS[($i)]} == "" ]];
     then
-      declare -i BLOCK_SIZE=$END_OF_FILE-${LINE_NUMBERS[($i-1)]}+1
+      declare -i SECTION_END=$END_OF_FILE
     else
-      declare -i BLOCK_SIZE=${LINE_NUMBERS[($i)]}-${LINE_NUMBERS[($i-1)]}
+      declare -i SECTION_END=${LINE_NUMBERS[($i)]}
     fi
+    declare -i BLOCK_SIZE=$SECTION_END-${LINE_NUMBERS[($i-1)]}
     declare -i GREP_INCREMENT=$BLOCK_SIZE-1
 
     ### Extract the statement's start and end dates
     echo "-start: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -E -i -o 'beginning balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' | sed 's/beginning balance on //gi')" >> ./temp/import.txt
     echo "-end: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -E -i -o 'ending balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' | sed 's/ending balance on //gi')" >> ./temp/import.txt
 
-    # TODO: Fix transaction section identifying (sections not always present)
-    # TODO: Add functionality to extract fees section as well
-    ### Identify the size of the each transactions section
-    declare -i TRANSACTIONS_SECTION_END="$(pdfgrep "" $f | grep -m $i -A $BLOCK_SIZE -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'total withdrawals' | cut -d : -f 1)"
-    TRANSACTIONS_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $BLOCK_SIZE -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
-    declare -i DEPOSITS_SECTION_SIZE=${TRANSACTIONS_LINE_NUMBERS[1]}-${TRANSACTIONS_LINE_NUMBERS[0]}-1
-    declare -i WITHDRAWALS_SECTION_SIZE=$TRANSACTIONS_SECTION_END-${TRANSACTIONS_LINE_NUMBERS[1]}-1
+    ### Determine the number of transaction sections present and the line numbers they begin at
+    NUMBER_OF_TRANSACTION_SECTIONS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | wc -l)"
+    TRANSACTION_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
 
-    ### Extract all deposits
-    echo "-deposits:" >> ./temp/import.txt
-    pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m 1 -A $DEPOSITS_SECTION_SIZE -i 'date[ ]*description[ ]*amount' | grep '[0-9]*\.[0-9]*' | grep '[0-9]*\/[0-9]*' | grep -E '[0-9]{1,2}\/[0-9].*[0-9]{1,3}\.[0-9]{1,2}' >> ./temp/import.txt
+    # Iterate over each transaction section
+    for j in $(seq 1 $NUMBER_OF_TRANSACTION_SECTIONS)
+    do
 
-    ### Extract all withdrawals
-    echo "-withdrawals:" >> ./temp/import.txt
-    pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m 2 -A $WITHDRAWALS_SECTION_SIZE -i 'date[ ]*description[ ]*amount' | grep '[0-9]*\.[0-9]*' | grep '[0-9]*\/[0-9]*' | grep -E '[0-9]{1,2}\/[0-9].*[0-9]{1,3}\.[0-9]{1,2}' >> ./temp/import.txt
+      ### Identify the size (in lines) of each transaction section
+      if [[ ${TRANSACTION_LINE_NUMBERS[($i)]} == "" ]];
+      then
+        declare -i TRANSACTION_SECTION_END=$SECTION_END
+      else
+        declare -i TRANSACTION_SECTION_END=${TRANSACTION_LINE_NUMBERS[($i)]}
+      fi
+      declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($i-1)]}
+      declare -i TRANSACTION_GREP_INCREMENT=$TRANSACTION_BLOCK_SIZE-1
+      declare -i k=$j*3
+
+      ### Extract all deposits
+      GREP_DEPOSITS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'deposits')"
+      if [[ $GREP_DEPOSITS != "" ]];
+      then
+        echo "-deposits:" >> ./temp/import.txt
+        DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
+        pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+        do
+          if [[ $line =~ $DEPOSIT_END_REGEX ]]
+          then
+            break
+          elif [[ $line =~ $TRANSACTION_REGEX ]]
+          then
+            echo "$line" >> ./temp/import.txt
+          else
+            continue
+          fi
+        done
+      fi
+
+      ### Extract all withdrawals
+      GREP_WITHDRAWALS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'withdrawals')"
+      if [[ $GREP_WITHDRAWALS != "" ]];
+      then
+        echo "-withdrawals:" >> ./temp/import.txt
+        WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
+        pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+        do
+          if [[ $line =~ $WITHDRAWAL_END_REGEX ]]
+          then
+            break
+          elif [[ $line =~ $TRANSACTION_REGEX ]]
+          then
+            echo "$line" >> ./temp/import.txt
+          else
+            continue
+          fi
+        done
+      fi
+
+    done
     echo "-stop:" >> ./temp/import.txt
 
   done
