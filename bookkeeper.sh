@@ -11,14 +11,14 @@ DATABASE_USERNAME=""
 DATABASE_PASSWORD=""
 
 # Setup
-sudo apt update
-sudo apt-get update
-sudo apt install python3 python3-pip poppler-utils
-pip install mysql-connector-python xlsxwriter
-sudo /etc/init.d/mysql start
-echo -e "\n\n\n"
-echo "Environment prepared"
-sleep 2
+#sudo apt update
+#sudo apt-get update
+#sudo apt install python3 python3-pip poppler-utils
+#pip install mysql-connector-python xlsxwriter
+#sudo /etc/init.d/mysql start
+#echo -e "\n\n\n"
+#echo "Environment prepared"
+#sleep 2
 
 # Reset DB
 python3 reset_db.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
@@ -85,6 +85,12 @@ do
     ### Determine the number of transaction sections present and the line numbers they begin at
     NUMBER_OF_TRANSACTION_SECTIONS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | wc -l)"
     TRANSACTION_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
+    END_OF_STATEMENT=$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | wc -l)
+
+    echo "Number of transaction sections:"
+    echo $NUMBER_OF_TRANSACTION_SECTIONS
+    echo "Transaction line numbers:"
+    echo ${TRANSACTION_LINE_NUMBERS[*]}
 
     if [[ $NUMBER_OF_TRANSACTION_SECTIONS -gt 0 ]]
     then
@@ -94,13 +100,13 @@ do
       do
 
         ### Identify the size (in lines) of each transaction section
-        if [[ ${TRANSACTION_LINE_NUMBERS[($i)]} == "" ]];
+        if [[ ${TRANSACTION_LINE_NUMBERS[($j)]} == "" ]];
         then
-          declare -i TRANSACTION_SECTION_END=$SECTION_END
+          declare -i TRANSACTION_SECTION_END=$END_OF_STATEMENT
         else
-          declare -i TRANSACTION_SECTION_END=${TRANSACTION_LINE_NUMBERS[($i)]}
+          declare -i TRANSACTION_SECTION_END=${TRANSACTION_LINE_NUMBERS[($j)]}
         fi
-        declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($i-1)]}
+        declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($j-1)]}
         declare -i TRANSACTION_GREP_INCREMENT=$TRANSACTION_BLOCK_SIZE-1
         declare -i k=$j*3
 
@@ -110,6 +116,17 @@ do
         then
           echo "-deposits:" >> ./temp/import.txt
           DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
+
+          echo "Transaction section $j"
+          echo "Transaction section line number: ${TRANSACTION_LINE_NUMBERS[($j-1)]}"
+          echo "Block size: $TRANSACTION_BLOCK_SIZE"
+          echo "Transaction section end: $TRANSACTION_SECTION_END"
+          echo "Statement section end: $END_OF_STATEMENT"
+          echo "Number of lines in current transaction section:"
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | wc -l
+          echo "Grabbing the current transaction section:"
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE
+
           pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
           do
             if [[ $line =~ $DEPOSIT_END_REGEX ]]
@@ -130,6 +147,17 @@ do
         then
           echo "-withdrawals:" >> ./temp/import.txt
           WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
+
+          echo "Transaction section $j"
+          echo "Transaction section line number: ${TRANSACTION_LINE_NUMBERS[($j-1)]}"
+          echo "Block size: $TRANSACTION_BLOCK_SIZE"
+          echo "Transaction section end: $TRANSACTION_SECTION_END"
+          echo "Statement section end: $END_OF_STATEMENT"
+          echo "Number of lines in current transaction section:"
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | wc -l
+          echo "Grabbing the current transaction section:"
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE
+
           pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
           do
             if [[ $line =~ $WITHDRAWAL_END_REGEX ]]
@@ -159,15 +187,15 @@ end_time=$(date +%M)
 echo "All PDF files processed successfully"
 elapsed=$(( end_time - start_time ))
 echo "(Took $elapsed minutes)"
-sleep 3
+#sleep 3
 
 # Import transactions into database
-echo " "
-echo " "
-echo "Importing all transaction data into database"
-echo " "
-python3 import.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
-echo "All transaction data imported into database successfully"
+#echo " "
+#echo " "
+#echo "Importing all transaction data into database"
+#echo " "
+#python3 import.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
+#echo "All transaction data imported into database successfully"
 
 # Sort bank accounts
 #python3 sort_accounts.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
