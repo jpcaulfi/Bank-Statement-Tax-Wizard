@@ -86,62 +86,66 @@ do
     NUMBER_OF_TRANSACTION_SECTIONS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | wc -l)"
     TRANSACTION_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
 
-    # Iterate over each transaction section
-    for j in $(seq 1 $NUMBER_OF_TRANSACTION_SECTIONS)
-    do
+    if [[ $NUMBER_OF_TRANSACTION_SECTIONS -gt 0 ]]
+    then
 
-      ### Identify the size (in lines) of each transaction section
-      if [[ ${TRANSACTION_LINE_NUMBERS[($i)]} == "" ]];
-      then
-        declare -i TRANSACTION_SECTION_END=$SECTION_END
-      else
-        declare -i TRANSACTION_SECTION_END=${TRANSACTION_LINE_NUMBERS[($i)]}
-      fi
-      declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($i-1)]}
-      declare -i TRANSACTION_GREP_INCREMENT=$TRANSACTION_BLOCK_SIZE-1
-      declare -i k=$j*3
+      # Iterate over each transaction section
+      for j in $(seq 1 $NUMBER_OF_TRANSACTION_SECTIONS)
+      do
 
-      ### Extract all deposits
-      GREP_DEPOSITS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'deposits')"
-      if [[ $GREP_DEPOSITS != "" ]];
-      then
-        echo "-deposits:" >> ./temp/import.txt
-        DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
-        pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
-        do
-          if [[ $line =~ $DEPOSIT_END_REGEX ]]
-          then
-            break
-          elif [[ $line =~ $TRANSACTION_REGEX ]]
-          then
-            echo "$line" >> ./temp/import.txt
-          else
-            continue
-          fi
-        done
-      fi
+        ### Identify the size (in lines) of each transaction section
+        if [[ ${TRANSACTION_LINE_NUMBERS[($i)]} == "" ]];
+        then
+          declare -i TRANSACTION_SECTION_END=$SECTION_END
+        else
+          declare -i TRANSACTION_SECTION_END=${TRANSACTION_LINE_NUMBERS[($i)]}
+        fi
+        declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($i-1)]}
+        declare -i TRANSACTION_GREP_INCREMENT=$TRANSACTION_BLOCK_SIZE-1
+        declare -i k=$j*3
 
-      ### Extract all withdrawals
-      GREP_WITHDRAWALS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'withdrawals')"
-      if [[ $GREP_WITHDRAWALS != "" ]];
-      then
-        echo "-withdrawals:" >> ./temp/import.txt
-        WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
-        pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
-        do
-          if [[ $line =~ $WITHDRAWAL_END_REGEX ]]
-          then
-            break
-          elif [[ $line =~ $TRANSACTION_REGEX ]]
-          then
-            echo "$line" >> ./temp/import.txt
-          else
-            continue
-          fi
-        done
-      fi
+        ### Extract all deposits
+        GREP_DEPOSITS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'deposits')"
+        if [[ $GREP_DEPOSITS != "" ]];
+        then
+          echo "-deposits:" >> ./temp/import.txt
+          DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+          do
+            if [[ $line =~ $DEPOSIT_END_REGEX ]]
+            then
+              break
+            elif [[ $line =~ $TRANSACTION_REGEX ]]
+            then
+              echo "$line" >> ./temp/import.txt
+            else
+              continue
+            fi
+          done
+        fi
 
-    done
+        ### Extract all withdrawals
+        GREP_WITHDRAWALS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'withdrawals')"
+        if [[ $GREP_WITHDRAWALS != "" ]];
+        then
+          echo "-withdrawals:" >> ./temp/import.txt
+          WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+          do
+            if [[ $line =~ $WITHDRAWAL_END_REGEX ]]
+            then
+              break
+            elif [[ $line =~ $TRANSACTION_REGEX ]]
+            then
+              echo "$line" >> ./temp/import.txt
+            else
+              continue
+            fi
+          done
+        fi
+
+      done
+    fi
     echo "-stop:" >> ./temp/import.txt
 
   done
