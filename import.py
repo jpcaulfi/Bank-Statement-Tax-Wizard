@@ -1,3 +1,10 @@
+#####################################################
+# This program based off of functionality from:
+#        Intuit Quickbooks
+# Not distributed for sale
+# Project created for learning purposes
+#####################################################
+
 import mysql.connector
 import re
 import sys
@@ -109,12 +116,19 @@ def import_transactions():
                               "VALUES(%s, %s, %s, %s, %s)"
     transactions = []
 
+    # Input stream from './temp/import.txt' contains flags to tell Python what to do
+    # 'bookkeeper.sh' has carefully inserted tags and formatted all of the transactions accordingly
     with open('./temp/import.txt') as transactions_file:
+
+        # Iterating over each line, if a flag is detected, certain values change in the script
         for line in transactions_file:
 
             if "-bank-name: " in line:
                 bank_name = line.replace("-bank-name: ", "").strip()
 
+            # When we get an account number, we want to check with the database
+            #   to see if the current bank-account pairing exists in the database already.
+            # If it does, we use that stored account's ID. If not, we create a new one.
             elif "-account-num: " in line:
                 account_num = line.replace("-account-num: ", "").strip()[-4:]
                 account_id = log_account_record(bank_name, account_num)
@@ -126,22 +140,20 @@ def import_transactions():
                 end_date = line.replace("-end: ", "")
 
             elif "-deposits:" in line:
-                transaction_type = "deposits"
                 coefficient = 1
-                print(f"   Importing {transaction_type} for {bank_name} account ending in {account_num}")
-                print(" ")
 
             elif "-withdrawals:" in line:
-                transaction_type = "withdrawals"
                 coefficient = -1
-                print(f"   Importing {transaction_type} for {bank_name} account ending in {account_num}")
-                print(" ")
 
+            # When we hit the stop flag, we have reached the end of a statement, and we write to the db
             elif "-stop:" in line:
                 db_cursor = db_connection.cursor()
                 db_cursor.executemany(insert_transactions_sql, transactions)
                 db_connection.commit()
+                transactions = []
 
+            # When no flags are present, we can safely assume the current line is a transaction
+            # After cleansing the record, we add the transaction to the list to be written to the database
             else:
                 transaction_array = line.split(" ")
                 date = scrub_date(transaction_array[0], start_date, end_date)
@@ -156,21 +168,26 @@ def import_transactions():
     print("------------------------------------------------------------")
 
 
+print("\n\nImporting all transaction data into database...\n")
+
+# Connect to database
 time.sleep(1)
 db_connection = get_database_connection()
 time.sleep(1)
 
+# Create tables if they don't exist
 db_cursor = db_connection.cursor()
 create_transactions_table = "(id INT AUTO_INCREMENT PRIMARY KEY, accountid INT, " \
                      "date DATE, amount FLOAT, " \
                      "description VARCHAR(255), category VARCHAR(255), type VARCHAR(255))"
 db_cursor.execute("CREATE TABLE IF NOT EXISTS transactions " + create_transactions_table)
 db_connection.commit()
-
 db_cursor = db_connection.cursor()
 create_accounts_table = "(id INT AUTO_INCREMENT PRIMARY KEY, bank VARCHAR(255), account INT, type VARCHAR(255))"
 db_cursor.execute("CREATE TABLE IF NOT EXISTS accounts " + create_accounts_table)
 db_connection.commit()
 
+# Import all transactions
 import_transactions()
+print("All transaction data imported into database successfully")
 time.sleep(1)
