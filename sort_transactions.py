@@ -1,3 +1,10 @@
+#####################################################
+# This program based off of functionality from:
+#        Intuit Quickbooks
+# Not distributed for sale
+# Project created for learning purposes
+#####################################################
+
 import time
 import sys
 import mysql.connector
@@ -87,6 +94,7 @@ def sort_transactions():
 
     while len(select_unspecified_transactions_response) > 0:
 
+        # Gather a list of all created categories
         existing_categories_list = []
         existing_categories_sql = "SELECT category FROM transactions GROUP BY category"
         db_cursor.execute(existing_categories_sql)
@@ -99,13 +107,18 @@ def sort_transactions():
 
             display_transaction_record(unspecified_transaction_record, existing_categories_list)
 
+            # Display the current transaction and prompt the user to input a category
             user_provided_category = "Uncategorized"
             proceed_assign_category = "n"
             while proceed_assign_category != "y":
                 user_provided_category = input("Enter a category for the above transaction: ").lower()
+
+                # If the category doesn't exist, ask for confirmation to create a new one
                 if user_provided_category not in existing_categories_list:
                     print(" ")
                     proceed_assign_category = input(f"\n\nCreate new category {user_provided_category}? (y/n)")
+
+                    # Have the user specify the new category as business or non-business
                     if proceed_assign_category == "y":
                         user_provided_category_type = input("\n\nBusiness or non-business?"
                                                             "\n0 for non-business, 1 for business\n: ")
@@ -116,9 +129,12 @@ def sort_transactions():
                 else:
                     proceed_assign_category = "y"
 
+            # Search the database for transactions that match the description of the current transaction
             db_cursor.execute(f"SELECT * FROM transactions WHERE description = '{unspecified_transaction_record[4]}'")
             select_matching_transactions_response = db_cursor.fetchall()
             number_of_matches = len(select_matching_transactions_response)
+
+            # Ask the user if they'd like to add all matched transactions to the entered category
             if number_of_matches > 1:
                 for x in range(0, 5):
                     print(" ")
@@ -128,6 +144,7 @@ def sort_transactions():
             else:
                 proceed_add_all = "y"
 
+            # Write the records to the database as specified by user inputs
             if proceed_add_all == "y":
                 for matching_transaction in select_matching_transactions_response:
                     db_cursor.execute(update_transaction_sql, [user_provided_category,
@@ -162,6 +179,7 @@ def sort_transactions():
     print("All transactions sorted")
 
 
+# Sorting all transactions into categories (Intuit Quickbooks)
 for x in range(0, 8):
     print(" ")
 proceed = input("You are about to begin sorting the stored transactions. Proceed? (y/n)")

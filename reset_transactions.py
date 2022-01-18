@@ -1,7 +1,9 @@
 import mysql.connector
 import sys
 
-reset_record_sql = "UPDATE transactions SET category = %s WHERE id = %s"
+
+# Sets all transactions to "Uncategorized"
+reset_record_sql = "UPDATE transactions SET category = %s, type = NULL WHERE id = %s"
 
 con = mysql.connector.connect(
     host=sys.argv[1],

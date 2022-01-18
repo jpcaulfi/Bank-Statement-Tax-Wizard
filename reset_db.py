@@ -2,6 +2,7 @@ import sys
 
 import mysql.connector
 
+# Deletes schema and re-creates it
 reset_con = mysql.connector.connect(
     host=sys.argv[1],
     user=sys.argv[3],

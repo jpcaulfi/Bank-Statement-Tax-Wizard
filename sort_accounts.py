@@ -1,3 +1,10 @@
+#####################################################
+# This program based off of functionality from:
+#        Intuit Quickbooks
+# Not distributed for sale
+# Project created for learning purposes
+#####################################################
+
 import time
 import sys
 import mysql.connector
@@ -69,11 +76,13 @@ def display_confirmation(record, type):
     time.sleep(1)
 
 
-
 def sort_accounts():
+
     update_account_sql = "UPDATE accounts SET type = %s WHERE id = %s"
     select_unspecified_accounts_sql = "SELECT * FROM accounts" \
                                             " WHERE type = 'NotSpecified'"
+
+    # Select all accounts with account type "NotSpecified"
     db_connection = get_database_connection()
     db_cursor = db_connection.cursor()
     db_cursor.execute(select_unspecified_accounts_sql)
@@ -85,6 +94,7 @@ def sort_accounts():
         db_cursor.execute(existing_types_sql)
         existing_types_response = db_cursor.fetchall()
 
+        # Take the user's input and set the account type to their input
         for unspecified_account_record in select_unspecified_accounts_response:
             display_account_record(unspecified_account_record, existing_types_response)
             user_provided_type = input("Enter an account type for the above account: ").lower()
@@ -103,6 +113,7 @@ def sort_accounts():
     print("All accounts sorted")
 
 
+# Sorting all bank accounts as checking, savings, etc
 for x in range(0, 8):
     print(" ")
 proceed = input("You are about to begin sorting the stored bank accounts. Proceed? (y/n)")
