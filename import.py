@@ -46,7 +46,7 @@ def log_account_record(bank_name, account_num):
             break
     else:
         db_cursor = db_connection.cursor()
-        insert_account_sql = "INSERT INTO accounts (bank, account, type) VALUES (%s, %s, %s)"
+        insert_account_sql = "INSERT INTO accounts (bank, account, nickname) VALUES (%s, %s, %s)"
         insert_account_val = [bank_name, account_num, "NotSpecified"]
         db_cursor.execute(insert_account_sql, insert_account_val)
         account_id = db_cursor.lastrowid
@@ -183,7 +183,7 @@ create_transactions_table = "(id INT AUTO_INCREMENT PRIMARY KEY, accountid INT, 
 db_cursor.execute("CREATE TABLE IF NOT EXISTS transactions " + create_transactions_table)
 db_connection.commit()
 db_cursor = db_connection.cursor()
-create_accounts_table = "(id INT AUTO_INCREMENT PRIMARY KEY, bank VARCHAR(255), account INT, type VARCHAR(255))"
+create_accounts_table = "(id INT AUTO_INCREMENT PRIMARY KEY, bank VARCHAR(255), account INT, nickname VARCHAR(255))"
 db_cursor.execute("CREATE TABLE IF NOT EXISTS accounts " + create_accounts_table)
 db_connection.commit()
 

@@ -31,15 +31,15 @@ def get_database_connection():
         print("         Check your values for connection string and schema name in bookkeeper.sh")
 
 
-def display_account_record(record, existing_types_response):
+def display_account_record(record, existing_nicknames_response):
     for x in range(0, 10):
         print(" ")
-    print("Existing bank account types:")
+    print("Existing bank account nicknames:")
     print("---------------------------------------------------------------")
     print(" ")
-    for existing_type in existing_types_response:
-        if existing_type[0] != "NotSpecified":
-            print(existing_type[0])
+    for existing_nickname in existing_nicknames_response:
+        if existing_nickname[0] != "NotSpecified":
+            print(existing_nickname[0])
     print(" ")
     print("---------------------------------------------------------------")
     print(" ")
@@ -56,7 +56,7 @@ def display_account_record(record, existing_types_response):
     print(" ")
 
 
-def display_confirmation(record, type):
+def display_confirmation(record, nickname):
     for x in range(0, 10):
         print(" ")
     print("Account (Your Changes):")
@@ -67,7 +67,7 @@ def display_confirmation(record, type):
     print(f"    Account Number: {record[2]}")
     print(" ")
     print(" ")
-    print(f"  --Marking as bank account type: {type}")
+    print(f"  --Marking as nickname: {nickname}")
     print(" ")
     print("---------------------------------------------------------------")
     print(" ")
@@ -78,11 +78,10 @@ def display_confirmation(record, type):
 
 def sort_accounts():
 
-    update_account_sql = "UPDATE accounts SET type = %s WHERE id = %s"
-    select_unspecified_accounts_sql = "SELECT * FROM accounts" \
-                                            " WHERE type = 'NotSpecified'"
+    update_account_sql = "UPDATE accounts SET nickname = %s WHERE id = %s"
+    select_unspecified_accounts_sql = "SELECT * FROM accounts WHERE nickname = 'NotSpecified'"
 
-    # Select all accounts with account type "NotSpecified"
+    # Select all accounts with account nickname "NotSpecified"
     db_connection = get_database_connection()
     db_cursor = db_connection.cursor()
     db_cursor.execute(select_unspecified_accounts_sql)
@@ -90,17 +89,17 @@ def sort_accounts():
 
     while len(select_unspecified_accounts_response) > 0:
 
-        existing_types_sql = "SELECT type FROM accounts GROUP BY type"
-        db_cursor.execute(existing_types_sql)
-        existing_types_response = db_cursor.fetchall()
+        existing_nicknames_sql = "SELECT nickname FROM accounts GROUP BY nickname"
+        db_cursor.execute(existing_nicknames_sql)
+        existing_nicknames_response = db_cursor.fetchall()
 
-        # Take the user's input and set the account type to their input
+        # Take the user's input and set the account nickname to their input
         for unspecified_account_record in select_unspecified_accounts_response:
-            display_account_record(unspecified_account_record, existing_types_response)
-            user_provided_type = input("Enter an account type for the above account: ").lower()
-            db_cursor.execute(update_account_sql, [user_provided_type, unspecified_account_record[0]])
+            display_account_record(unspecified_account_record, existing_nicknames_response)
+            user_provided_nickname = input("Enter an account nickname for the above account: ").lower()
+            db_cursor.execute(update_account_sql, [user_provided_nickname, unspecified_account_record[0]])
             db_connection.commit()
-            display_confirmation(unspecified_account_record, user_provided_type)
+            display_confirmation(unspecified_account_record, user_provided_nickname)
             break
 
         db_cursor = db_connection.cursor()
