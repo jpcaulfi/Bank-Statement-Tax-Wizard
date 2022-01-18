@@ -127,7 +127,7 @@ do
         then
 
           echo "-deposits:" >> ./temp/import.txt
-          DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
+          DEPOSIT_END_REGEX='[ ]*[Tt]otal [Dd]eposits.*'
           pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
             | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' \
             | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
@@ -152,7 +152,7 @@ do
         then
 
           echo "-withdrawals:" >> ./temp/import.txt
-          WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
+          WITHDRAWAL_END_REGEX='[ ]*[Tt]otal [Ww]ithdrawals.*'
           pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
             | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' \
             | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
