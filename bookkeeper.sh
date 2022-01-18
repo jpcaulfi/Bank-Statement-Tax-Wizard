@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#####################################################
+# This program based off of functionality from:
+#        Intuit Quickbooks
+# Not distributed for sale
+# Project created for learning purposes
+#####################################################
+
 # Enter this repository with cd and run this command:
 #    sudo bash bookkeeper.sh
 
@@ -79,13 +86,20 @@ do
     declare -i GREP_INCREMENT=$BLOCK_SIZE-1
 
     ### Extract the statement's start and end dates
-    echo "-start: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -E -i -o 'beginning balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' | sed 's/beginning balance on //gi')" >> ./temp/import.txt
-    echo "-end: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -E -i -o 'ending balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' | sed 's/ending balance on //gi')" >> ./temp/import.txt
+    echo "-start: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+      | grep -E -i -o 'beginning balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' \
+      | sed 's/beginning balance on //gi')" >> ./temp/import.txt
+    echo "-end: $(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+      | grep -E -i -o 'ending balance on [A-Za-z]{1,9}+[ ]*+[0-9]{1,2}+[,]+[ ]*+[0-9]{1,4}' \
+      | sed 's/ending balance on //gi')" >> ./temp/import.txt
 
     ### Determine the number of transaction sections present and the line numbers they begin at
-    NUMBER_OF_TRANSACTION_SECTIONS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | wc -l)"
-    TRANSACTION_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
-    END_OF_STATEMENT=$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | wc -l)
+    NUMBER_OF_TRANSACTION_SECTIONS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' \
+      | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | wc -l)"
+    TRANSACTION_LINE_NUMBERS=(`pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' \
+      | tail -$BLOCK_SIZE | grep -n -i 'date[ ]*description[ ]*amount' | cut -d : -f 1`)
+    END_OF_STATEMENT=$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' \
+      | tail -$BLOCK_SIZE | wc -l)
 
     if [[ $NUMBER_OF_TRANSACTION_SECTIONS -gt 0 ]]
     then
@@ -103,15 +117,20 @@ do
         fi
         declare -i TRANSACTION_BLOCK_SIZE=$TRANSACTION_SECTION_END-${TRANSACTION_LINE_NUMBERS[($j-1)]}
         declare -i TRANSACTION_GREP_INCREMENT=$TRANSACTION_BLOCK_SIZE-1
-        declare -i k=$j*3
+        declare -i k=$j*2+1
 
         ### Extract all deposits
-        GREP_DEPOSITS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'deposits')"
+        GREP_DEPOSITS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+          | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -3 | grep -i -E '^[ ]*deposits')"
+
         if [[ $GREP_DEPOSITS != "" ]];
         then
+
           echo "-deposits:" >> ./temp/import.txt
           DEPOSIT_END_REGEX='[]*[Tt]otal [Dd]eposits.*'
-          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+            | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' \
+            | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
           do
             if [[ $line =~ $DEPOSIT_END_REGEX ]]
             then
@@ -126,12 +145,17 @@ do
         fi
 
         ### Extract all withdrawals
-        GREP_WITHDRAWALS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -$k | grep -i 'withdrawals')"
+        GREP_WITHDRAWALS="$(pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+          | grep -m $j -B 2 -i 'date[ ]*description[ ]*amount' | tail -3 | grep -i -E '^[ ]*withdrawals')"
+
         if [[ $GREP_WITHDRAWALS != "" ]];
         then
+
           echo "-withdrawals:" >> ./temp/import.txt
           WITHDRAWAL_END_REGEX='[]*[Tt]otal [Ww]ithdrawals.*'
-          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
+          pdfgrep "" $f | grep -m $i -A $GREP_INCREMENT -i 'beginning balance on ' | tail -$BLOCK_SIZE \
+            | grep -m $j -A $TRANSACTION_GREP_INCREMENT -i 'date[ ]*description[ ]*amount' \
+            | tail -$TRANSACTION_BLOCK_SIZE | while read -r line
           do
             if [[ $line =~ $WITHDRAWAL_END_REGEX ]]
             then
@@ -163,12 +187,7 @@ echo "(Took $elapsed minutes)"
 sleep 3
 
 # Import transactions into database
-echo " "
-echo " "
-echo "Importing all transaction data into database"
-echo " "
 python3 import.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
-echo "All transaction data imported into database successfully"
 
 # Sort bank accounts
 python3 sort_accounts.py $DATABASE_STRING $SCHEMA_NAME $DATABASE_USERNAME $DATABASE_PASSWORD
