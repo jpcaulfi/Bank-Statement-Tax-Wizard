@@ -46,7 +46,7 @@ def display_transaction_record(record, existing_categories_list, account_nicknam
     print(" ")
     print("Transaction:")
     print("---------------------------------------------------------------")
-    print(" ")  # TODO: Print out account nickname here
+    print(" ")
     print(f"    Account Nickname: {account_nickname_dict[record[0]]}")
     print(" ")
     print(f"    Date: {record[2]}")
@@ -66,7 +66,7 @@ def display_single_confirmation(record, category, type, account_nickname_dict, a
     print(" ")
     print("Transaction (Your Changes):")
     print("---------------------------------------------------------------")
-    print(" ")  # TODO: Print out account nickname here
+    print(" ")
     print(f"    Account Nickname: {account_nickname_dict[record[0]]}")
     print(" ")
     print(f"    Date: {record[2]}")
