@@ -178,12 +178,12 @@ def generate_results(fiscal_new_year_array):
         business_gross = 0.00
         business_income = 0.00
         for business_category_record in this_period_business_response:
-            income_summary_sheet.write(income_b_row, 1, business_category_record[0])
+            income_summary_sheet.write(income_b_row, 1, business_category_record[0].title())
             income_summary_sheet.write(income_b_row, 2, business_category_record[1])
             business_income += business_category_record[1]
             if business_category_record[1] >= 0:
                 business_gross += business_category_record[1]
-                sales_summary_sheet.write(sales_b_row, 1, business_category_record[0])
+                sales_summary_sheet.write(sales_b_row, 1, business_category_record[0].title())
                 sales_summary_sheet.write(sales_b_row, 2, business_category_record[1])
                 sales_b_row += 1
             income_b_row += 1
@@ -217,12 +217,12 @@ def generate_results(fiscal_new_year_array):
         nonbusiness_gross = 0.00
         nonbusiness_income = 0.00
         for nonbusiness_category_record in this_period_nonbusiness_response:
-            income_summary_sheet.write(income_nb_row, 4, nonbusiness_category_record[0])
+            income_summary_sheet.write(income_nb_row, 4, nonbusiness_category_record[0].title())
             income_summary_sheet.write(income_nb_row, 5, nonbusiness_category_record[1])
             nonbusiness_income += nonbusiness_category_record[1]
             if nonbusiness_category_record[1] >= 0:
                 nonbusiness_gross += nonbusiness_category_record[1]
-                sales_summary_sheet.write(sales_nb_row, 4, nonbusiness_category_record[0])
+                sales_summary_sheet.write(sales_nb_row, 4, nonbusiness_category_record[0].title())
                 sales_summary_sheet.write(sales_nb_row, 5, nonbusiness_category_record[1])
                 sales_nb_row += 1
             income_nb_row += 1
@@ -266,12 +266,12 @@ def generate_results(fiscal_new_year_array):
         income_dump_t_sheet.write(dump_t_row, 0, account_nickname_dict[transaction_record[1]])
         income_dump_t_sheet.write(dump_t_row, 1, str(transaction_record[2]))
         income_dump_t_sheet.write(dump_t_row, 2, transaction_record[4])
-        income_dump_t_sheet.write(dump_t_row, 3, transaction_record[5])
+        income_dump_t_sheet.write(dump_t_row, 3, transaction_record[5].title())
         income_dump_t_sheet.write(dump_t_row, 4, transaction_record[3])
         sales_dump_t_sheet.write(dump_t_row, 0, account_nickname_dict[transaction_record[1]])
         sales_dump_t_sheet.write(dump_t_row, 1, str(transaction_record[2]))
         sales_dump_t_sheet.write(dump_t_row, 2, transaction_record[4])
-        sales_dump_t_sheet.write(dump_t_row, 3, transaction_record[5])
+        sales_dump_t_sheet.write(dump_t_row, 3, transaction_record[5].title())
         sales_dump_t_sheet.write(dump_t_row, 4, transaction_record[3])
         dump_t_row += 1
 
@@ -295,11 +295,11 @@ def generate_results(fiscal_new_year_array):
         income_dump_a_sheet.write(dump_a_row, 0, account_record[0])
         income_dump_a_sheet.write(dump_a_row, 1, account_record[1])
         income_dump_a_sheet.write(dump_a_row, 2, account_record[2])
-        income_dump_a_sheet.write(dump_a_row, 3, account_record[3])
+        income_dump_a_sheet.write(dump_a_row, 3, account_record[3].title())
         sales_dump_a_sheet.write(dump_a_row, 0, account_record[0])
         sales_dump_a_sheet.write(dump_a_row, 1, account_record[1])
         sales_dump_a_sheet.write(dump_a_row, 2, account_record[2])
-        sales_dump_a_sheet.write(dump_a_row, 3, account_record[3])
+        sales_dump_a_sheet.write(dump_a_row, 3, account_record[3].title())
         dump_a_row += 1
 
     income_statement_wb.close()
