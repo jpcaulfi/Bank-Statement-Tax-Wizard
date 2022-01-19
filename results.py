@@ -90,11 +90,18 @@ def generate_results(fiscal_new_year_array):
         print(" ")
     print("\n\n\nWriting summaries...\n\n\n")
 
+    # Get all the accounts and their nicknames
+    get_accounts_sql = "SELECT id, nickname FROM accounts"
+    db_connection = get_database_connection()
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(get_accounts_sql)
+    account_nickname_dict = {}
+    for account_record in db_cursor.fetchall():
+        account_nickname_dict[account_record[0]] = account_record[1]
+
     # Create a workbook for each statement (income, sales)
     income_statement_wb = xlsxwriter.Workbook('./results/income_statement.xlsx')
     sales_statement_wb = xlsxwriter.Workbook('./results/sales_statement.xlsx')
-    db_connection = get_database_connection()
-    db_cursor = db_connection.cursor()
 
     # Create the summary sheet for the income statement
     #   and populate the header with information
@@ -243,25 +250,25 @@ def generate_results(fiscal_new_year_array):
     db_cursor.execute(select_all_transactions_sql)
     all_transactions_response = db_cursor.fetchall()
     income_dump_t_sheet = income_statement_wb.add_worksheet('All Transactions')
-    income_dump_t_sheet.write(0, 0, "Account ID")
+    income_dump_t_sheet.write(0, 0, "Account")
     income_dump_t_sheet.write(0, 1, "Date")
     income_dump_t_sheet.write(0, 2, "Description")
     income_dump_t_sheet.write(0, 3, "Category")
     income_dump_t_sheet.write(0, 4, "Amount")
     sales_dump_t_sheet = sales_statement_wb.add_worksheet('All Transactions')
-    sales_dump_t_sheet.write(0, 0, "Account ID")
+    sales_dump_t_sheet.write(0, 0, "Account")
     sales_dump_t_sheet.write(0, 1, "Date")
     sales_dump_t_sheet.write(0, 2, "Description")
     sales_dump_t_sheet.write(0, 3, "Category")
     sales_dump_t_sheet.write(0, 4, "Amount")
     dump_t_row = 1
     for transaction_record in all_transactions_response:
-        income_dump_t_sheet.write(dump_t_row, 0, transaction_record[1])
+        income_dump_t_sheet.write(dump_t_row, 0, account_nickname_dict[transaction_record[1]])
         income_dump_t_sheet.write(dump_t_row, 1, str(transaction_record[2]))
         income_dump_t_sheet.write(dump_t_row, 2, transaction_record[4])
         income_dump_t_sheet.write(dump_t_row, 3, transaction_record[5])
         income_dump_t_sheet.write(dump_t_row, 4, transaction_record[3])
-        sales_dump_t_sheet.write(dump_t_row, 0, transaction_record[1])
+        sales_dump_t_sheet.write(dump_t_row, 0, account_nickname_dict[transaction_record[1]])
         sales_dump_t_sheet.write(dump_t_row, 1, str(transaction_record[2]))
         sales_dump_t_sheet.write(dump_t_row, 2, transaction_record[4])
         sales_dump_t_sheet.write(dump_t_row, 3, transaction_record[5])
@@ -277,12 +284,12 @@ def generate_results(fiscal_new_year_array):
     income_dump_a_sheet.write(0, 0, "Account ID")
     income_dump_a_sheet.write(0, 1, "Bank")
     income_dump_a_sheet.write(0, 2, "Account Num")
-    income_dump_a_sheet.write(0, 3, "Type")
+    income_dump_a_sheet.write(0, 3, "Nickname")
     sales_dump_a_sheet = sales_statement_wb.add_worksheet('All Accounts')
     sales_dump_a_sheet.write(0, 0, "Account ID")
     sales_dump_a_sheet.write(0, 1, "Bank")
     sales_dump_a_sheet.write(0, 2, "Account Num")
-    sales_dump_a_sheet.write(0, 3, "Type")
+    sales_dump_a_sheet.write(0, 3, "Nickname")
     dump_a_row = 1
     for account_record in all_accounts_response:
         income_dump_a_sheet.write(dump_a_row, 0, account_record[0])
