@@ -173,8 +173,11 @@ def sort_transactions():
                                                            category_type_dict[user_provided_category],
                                                            unspecified_transaction_record[0]])
                 db_connection.commit()
-                display_single_confirmation(unspecified_transaction_record, user_provided_category,
-                                            category_type_dict[user_provided_category], " ")
+                display_single_confirmation(unspecified_transaction_record,
+                                            user_provided_category,
+                                            category_type_dict[user_provided_category],
+                                            account_nickname_dict,
+                                            " ")
             break
 
         db_cursor = db_connection.cursor()
