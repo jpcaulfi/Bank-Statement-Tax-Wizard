@@ -31,7 +31,7 @@ def get_database_connection():
         print("         Check your values for connection string and schema name in bookkeeper.sh")
 
 
-def display_transaction_record(record, existing_categories_list):
+def display_transaction_record(record, existing_categories_list, account_nickname_dict):
     for x in range(0, 10):
         print(" ")
     print("Existing transaction categories:")
@@ -46,6 +46,8 @@ def display_transaction_record(record, existing_categories_list):
     print(" ")
     print("Transaction:")
     print("---------------------------------------------------------------")
+    print(" ")  # TODO: Print out account nickname here
+    print(f"    Account Nickname: {account_nickname_dict[record[0]]}")
     print(" ")
     print(f"    Date: {record[2]}")
     print(" ")
@@ -57,13 +59,15 @@ def display_transaction_record(record, existing_categories_list):
     print(" ")
 
 
-def display_single_confirmation(record, category, type, additional_message):
+def display_single_confirmation(record, category, type, account_nickname_dict, additional_message):
     for x in range(0, 8):
         print(" ")
     print(additional_message)
     print(" ")
     print("Transaction (Your Changes):")
     print("---------------------------------------------------------------")
+    print(" ")  # TODO: Print out account nickname here
+    print(f"    Account Nickname: {account_nickname_dict[record[0]]}")
     print(" ")
     print(f"    Date: {record[2]}")
     print(" ")
@@ -81,12 +85,18 @@ def display_single_confirmation(record, category, type, additional_message):
 
 def sort_transactions():
 
+    # Get all the accounts and their nicknames
+    get_accounts_sql = "SELECT id, nickname FROM accounts"
+    db_connection = get_database_connection()
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(get_accounts_sql)
+    account_nickname_dict = {}
+    for account_record in db_cursor.fetchall():
+        account_nickname_dict[account_record[0]] = account_record[1]
+
     update_transaction_sql = "UPDATE transactions SET category = %s, type = %s WHERE id = %s"
     select_unspecified_transactions_sql = "SELECT * FROM transactions " \
                                           "WHERE category = 'Uncategorized'"
-
-    db_connection = get_database_connection()
-    db_cursor = db_connection.cursor()
     db_cursor.execute(select_unspecified_transactions_sql)
     select_unspecified_transactions_response = db_cursor.fetchall()
 
@@ -105,9 +115,10 @@ def sort_transactions():
 
         for unspecified_transaction_record in select_unspecified_transactions_response:
 
-            display_transaction_record(unspecified_transaction_record, existing_categories_list)
-
             # Display the current transaction and prompt the user to input a category
+            display_transaction_record(unspecified_transaction_record,
+                                       existing_categories_list,
+                                       account_nickname_dict)
             user_provided_category = "Uncategorized"
             proceed_assign_category = "n"
             while proceed_assign_category != "y":
@@ -151,8 +162,10 @@ def sort_transactions():
                                                                category_type_dict[user_provided_category],
                                                                matching_transaction[0]])
                 db_connection.commit()
-                display_single_confirmation(unspecified_transaction_record, user_provided_category,
+                display_single_confirmation(unspecified_transaction_record,
+                                            user_provided_category,
                                             category_type_dict[user_provided_category],
+                                            account_nickname_dict,
                                             f"Adding {number_of_matches} transactions to "
                                             f"category {user_provided_category}\nIncluding:")
             else:
