@@ -85,22 +85,28 @@ def display_single_confirmation(record, category, type, account_nickname_dict, a
 
 def sort_transactions():
 
-    # Get all the accounts and their nicknames
-    get_accounts_sql = "SELECT id, nickname FROM accounts"
     db_connection = get_database_connection()
     db_cursor = db_connection.cursor()
-    db_cursor.execute(get_accounts_sql)
+
+    # Get all the accounts and their nicknames
     account_nickname_dict = {}
+    get_accounts_sql = "SELECT id, nickname FROM accounts"
+    db_cursor.execute(get_accounts_sql)
     for account_record in db_cursor.fetchall():
         account_nickname_dict[account_record[0]] = account_record[1]
+
+    # Get all existing categories (if running this alone without resetting db)
+    category_type_dict = {}
+    get_categories_sql = "SELECT category, type FROM transactions GROUP BY category, type"
+    db_cursor.execute(get_categories_sql)
+    for category_record in db_cursor.fetchall():
+        category_type_dict[category_record[0]] = category_record[1]
 
     update_transaction_sql = "UPDATE transactions SET category = %s, type = %s WHERE id = %s"
     select_unspecified_transactions_sql = "SELECT * FROM transactions " \
                                           "WHERE category = 'Uncategorized'"
     db_cursor.execute(select_unspecified_transactions_sql)
     select_unspecified_transactions_response = db_cursor.fetchall()
-
-    category_type_dict = {}
 
     while len(select_unspecified_transactions_response) > 0:
 
