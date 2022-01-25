@@ -50,7 +50,6 @@ def log_account_record(bank_name, account_num):
         insert_account_val = [bank_name, account_num, "NotSpecified"]
         db_cursor.execute(insert_account_sql, insert_account_val)
         account_id = db_cursor.lastrowid
-    time.sleep(1)
     return account_id
 
 
@@ -131,7 +130,6 @@ def import_transactions():
             # If it does, we use that stored account's ID. If not, we create a new one.
             elif "-account-num: " in line:
                 account_num = line.replace("-account-num: ", "").strip()[-4:]
-                account_id = log_account_record(bank_name, account_num)
 
             elif "-start: " in line:
                 start_date = line.replace("-start: ", "")
@@ -140,9 +138,11 @@ def import_transactions():
                 end_date = line.replace("-end: ", "")
 
             elif "-deposits:" in line:
+                account_id = log_account_record(bank_name, account_num)
                 coefficient = 1
 
             elif "-withdrawals:" in line:
+                account_id = log_account_record(bank_name, account_num)
                 coefficient = -1
 
             # When we hit the stop flag, we have reached the end of a statement, and we write to the db
